@@ -71,25 +71,25 @@ fun ClipboardScreen() = FlorisScreen {
         }
 
         PreferenceGroup(title = stringRes(R.string.pref__clipboard__group_clipboard_history__label)) {
-            // Внутри PreferenceGroup в ClipboardScreen.kt
-            SwitchPreference(
-                prefs.clipboard.largeTextHandling,
-                title = stringRes(R.string.pref__clipboard__large_text_handling__label), // Эту строку нужно будет добавить в strings.xml
-                summary = stringRes(R.string.pref__clipboard__large_text_handling__summary), // И эту тоже
-            )
-            DialogSliderPreference(
-                prefs.clipboard.largeTextThresholdKb,
-                title = stringRes(R.string.pref__clipboard__large_text_threshold__label), // И эту
-                valueLabel = { stringRes(R.string.unit__kilobytes__symbol, "v" to it) }, // И эту
-                min = 256,
-                max = 8192,
-                stepIncrement = 256,
-                enabledIf = { prefs.clipboard.largeTextHandling isEqualTo true },
-            )
             SwitchPreference(
                 prefs.clipboard.historyEnabled,
                 title = stringRes(R.string.pref__clipboard__enable_clipboard_history__label),
                 summary = stringRes(R.string.pref__clipboard__enable_clipboard_history__summary),
+            )
+            // ИСПРАВЛЕНИЕ ЗДЕСЬ: Добавляем новые настройки
+            SwitchPreference(
+                prefs.clipboard.largeTextHandling,
+                title = stringRes(R.string.pref__clipboard__large_text_handling__label),
+                summary = stringRes(R.string.pref__clipboard__large_text_handling__summary),
+            )
+            DialogSliderPreference(
+                prefs.clipboard.largeTextThresholdKb,
+                title = stringRes(R.string.pref__clipboard__large_text_threshold__label),
+                valueLabel = { pluralsRes(R.plurals.unit__kilobytes__symbol, it, "v" to it) }, // ИСПРАВЛЕНО
+                min = 256,
+                max = 8192,
+                stepIncrement = 256,
+                enabledIf = { prefs.clipboard.largeTextHandling isEqualTo true },
             )
             DialogSliderPreference(
                 primaryPref = prefs.clipboard.numHistoryGridColumnsPortrait,

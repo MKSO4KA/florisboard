@@ -1,3 +1,5 @@
+// Вставьте этот код в app/src/main/kotlin/dev/patrickgold/florisboard/ime/clipboard/provider/ClipboardDatabase.kt
+
 /*
  * Copyright (C) 2022-2025 The FlorisBoard Contributors
  *
@@ -19,6 +21,7 @@ package dev.patrickgold.florisboard.ime.clipboard.provider
 import android.content.ClipData
 import android.content.ClipDescription.EXTRA_IS_REMOTE_DEVICE
 import android.content.ClipDescription.EXTRA_IS_SENSITIVE
+import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor

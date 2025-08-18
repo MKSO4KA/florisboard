@@ -1,3 +1,5 @@
+// Вставьте этот код в app/src/main/kotlin/dev/patrickgold/florisboard/ime/clipboard/ClipboardManager.kt
+
 /*
  * Copyright (C) 2021-2025 The FlorisBoard Contributors
  *
@@ -23,10 +25,12 @@ import androidx.lifecycle.MutableLiveData
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.appContext
 import dev.patrickgold.florisboard.editorInstance
+import dev.patrickgold.florisboard.ime.clipboard.provider.ClipboardFileStorage
 import dev.patrickgold.florisboard.ime.clipboard.provider.ClipboardHistoryDao
 import dev.patrickgold.florisboard.ime.clipboard.provider.ClipboardHistoryDatabase
 import dev.patrickgold.florisboard.ime.clipboard.provider.ClipboardItem
 import dev.patrickgold.florisboard.ime.clipboard.provider.ItemType
+import dev.patrickgold.florisboard.lib.devtools.flogError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -214,16 +218,14 @@ class ClipboardManager(
     /**
      * Wraps some plaintext in a ClipData and calls [addNewClip]
      */
-        fun addNewPlaintext(newText: String) {
+    fun addNewPlaintext(newText: String) {
         if (prefs.clipboard.largeTextHandling.get()) {
-            // Приблизительный размер в байтах. В Kotlin char это 2 байта.
             val textSizeInBytes = newText.length * 2
             val thresholdInBytes = prefs.clipboard.largeTextThresholdKb.get() * 1024
-    
+
             if (textSizeInBytes > thresholdInBytes) {
-                // Текст большой, сохраняем в файл
                 val fileUri = ClipboardFileStorage.writeTextToNewFile(appContext, newText)
-                val previewText = newText.take(200) // Создаем предпросмотр
+                val previewText = newText.take(200)
                 val item = ClipboardItem(
                     type = ItemType.TEXT,
                     text = previewText,
@@ -236,8 +238,7 @@ class ClipboardManager(
                 return
             }
         }
-    
-        // Текст маленький, используем старую логику
+
         val newData = ClipboardItem.text(newText)
         addNewClip(newData)
     }
@@ -314,13 +315,10 @@ class ClipboardManager(
      */
     fun clearHistory() {
         ioScope.launch {
-            // Сначала получаем список элементов, которые будут удалены
             val itemsToDelete = history().recent + history().other
             for (item in itemsToDelete) {
-                // Удаляем связанные файлы
                 item.close(appContext)
             }
-            // Теперь удаляем записи из базы данных
             clipHistoryDao?.deleteAllUnpinned()
         }
     }
@@ -330,13 +328,10 @@ class ClipboardManager(
      */
     fun clearFullHistory() {
         ioScope.launch {
-            // Сначала получаем ВЕСЬ список элементов
             val itemsToDelete = history().all
             for (item in itemsToDelete) {
-                // Удаляем связанные файлы
                 item.close(appContext)
             }
-            // Теперь удаляем все записи из базы данных
             clipHistoryDao?.deleteAll()
         }
     }
@@ -361,12 +356,7 @@ class ClipboardManager(
     fun deleteClip(item: ClipboardItem) {
         ioScope.launch {
             clipHistoryDao?.delete(item)
-            tryOrNull {
-                val uri = item.uri
-                if (uri != null) {
-                    appContext.contentResolver.delete(uri, null, null)
-                }
-            }
+            item.close(appContext)
         }
     }
 
@@ -385,7 +375,6 @@ class ClipboardManager(
     fun pasteItem(item: ClipboardItem) {
         val editorInstance by appContext.editorInstance()
         if (item.type == ItemType.TEXT && item.uri != null) {
-            // Это большой текстовый фрагмент, читаем из файла
             val fileContent = try {
                 appContext.contentResolver.openInputStream(item.uri)?.bufferedReader()?.use { it.readText() }
             } catch (e: Exception) {
@@ -395,12 +384,10 @@ class ClipboardManager(
             if (fileContent != null) {
                 editorInstance.commitText(fileContent)
             } else {
-                // Если файл не прочитался, вставляем хотя бы предпросмотр
                 editorInstance.commitText(item.text.toString())
                 appContext.showShortToastSync("Failed to read full text, pasting preview.")
             }
         } else {
-            // Стандартная логика для изображений и обычного текста
             editorInstance.commitClipboardItem(item).also { result ->
                 if (!result) {
                     appContext.showShortToastSync("Failed to paste item.")

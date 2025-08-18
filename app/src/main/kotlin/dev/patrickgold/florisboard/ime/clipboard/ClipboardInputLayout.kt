@@ -1,3 +1,5 @@
+// Вставьте этот код в app/src/main/kotlin/dev/patrickgold/florisboard/ime/clipboard/ClipboardInputLayout.kt
+
 /*
  * Copyright (C) 2021-2025 The FlorisBoard Contributors
  *
@@ -53,6 +55,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Backspace
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.FilterListOff
 import androidx.compose.material.icons.filled.Image
@@ -129,7 +132,6 @@ import org.florisboard.lib.snygg.ui.SnyggIcon
 import org.florisboard.lib.snygg.ui.SnyggIconButton
 import org.florisboard.lib.snygg.ui.SnyggRow
 import org.florisboard.lib.snygg.ui.SnyggText
-import androidx.compose.material.icons.filled.Description
 
 private val ItemWidth = 200.dp
 private val DialogWidth = 240.dp
@@ -342,11 +344,15 @@ fun ClipboardInputLayout(
                         tint = Color.Black,
                     )
                 } else {
+                    SnyggText(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = bitmap.exceptionOrNull()?.message ?: "Unknown error",
+                    )
+                }
+            } else {
                 val text = item.stringRepresentation()
                 Column {
-                    // НАЧАЛО ИЗМЕНЕНИЙ
                     if (item.uri != null) {
-                        // Это большой текстовый фрагмент, показываем специальный заголовок
                         SnyggRow(
                             elementName = FlorisImeUi.ClipboardItemDescription.elementName,
                             attributes = attributes,
@@ -355,14 +361,10 @@ fun ClipboardInputLayout(
                             SnyggIcon(imageVector = Icons.Default.Description)
                             SnyggText(
                                 modifier = Modifier.weight(1f),
-                                // !! ВАЖНО: Добавьте эту строку в app/src/main/res/values/strings.xml
-                                // <string name="clipboard__item_description_large_text">Large text file</string>
                                 text = stringRes(R.string.clipboard__item_description_large_text)
                             )
                         }
                     }
-                    // КОНЕЦ ИЗМЕНЕНИЙ
-
                     ClipTextItemDescription(
                         elementName = FlorisImeUi.ClipboardItemDescription.elementName,
                         attributes = attributes,
@@ -693,6 +695,34 @@ fun ClipboardInputLayout(
                 HistoryDisabledView()
             }
         }
+    }
+}
+
+private fun LazyStaggeredGridScope.clipboardItems(
+    items: List<ClipboardItem>,
+    key: String,
+    @StringRes title: Int,
+) {
+    if (items.isNotEmpty()) {
+        item(key, span = StaggeredGridItemSpan.FullLine) {
+            ClipCategoryTitle(text = stringRes(title))
+        }
+        items(items) { item ->
+            //ClipItemView(
+            //    elementName = FlorisImeUi.ClipboardItem.elementName,
+            //    item = item,
+            //    contentScrollInsteadOfClip = false,
+            //)
+        }
+    }
+}
+
+private fun LazyStaggeredGridScope.header(
+    key: String,
+    content: @Composable () -> Unit,
+) {
+    item(key, span = StaggeredGridItemSpan.FullLine) {
+        content()
     }
 }
 
