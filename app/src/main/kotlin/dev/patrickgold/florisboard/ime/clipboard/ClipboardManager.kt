@@ -214,7 +214,30 @@ class ClipboardManager(
     /**
      * Wraps some plaintext in a ClipData and calls [addNewClip]
      */
-    fun addNewPlaintext(newText: String) {
+        fun addNewPlaintext(newText: String) {
+        if (prefs.clipboard.largeTextHandling.get()) {
+            // Приблизительный размер в байтах. В Kotlin char это 2 байта.
+            val textSizeInBytes = newText.length * 2
+            val thresholdInBytes = prefs.clipboard.largeTextThresholdKb.get() * 1024
+    
+            if (textSizeInBytes > thresholdInBytes) {
+                // Текст большой, сохраняем в файл
+                val fileUri = ClipboardFileStorage.writeTextToNewFile(appContext, newText)
+                val previewText = newText.take(200) // Создаем предпросмотр
+                val item = ClipboardItem(
+                    type = ItemType.TEXT,
+                    text = previewText,
+                    uri = fileUri,
+                    creationTimestampMs = System.currentTimeMillis(),
+                    isPinned = false,
+                    mimeTypes = arrayOf("text/plain"),
+                )
+                addNewClip(item)
+                return
+            }
+        }
+    
+        // Текст маленький, используем старую логику
         val newData = ClipboardItem.text(newText)
         addNewClip(newData)
     }
@@ -291,9 +314,13 @@ class ClipboardManager(
      */
     fun clearHistory() {
         ioScope.launch {
-            for (item in history().all) {
+            // Сначала получаем список элементов, которые будут удалены
+            val itemsToDelete = history().recent + history().other
+            for (item in itemsToDelete) {
+                // Удаляем связанные файлы
                 item.close(appContext)
             }
+            // Теперь удаляем записи из базы данных
             clipHistoryDao?.deleteAllUnpinned()
         }
     }
@@ -303,9 +330,13 @@ class ClipboardManager(
      */
     fun clearFullHistory() {
         ioScope.launch {
-            for (item in history().all) {
+            // Сначала получаем ВЕСЬ список элементов
+            val itemsToDelete = history().all
+            for (item in itemsToDelete) {
+                // Удаляем связанные файлы
                 item.close(appContext)
             }
+            // Теперь удаляем все записи из базы данных
             clipHistoryDao?.deleteAll()
         }
     }
@@ -353,9 +384,27 @@ class ClipboardManager(
 
     fun pasteItem(item: ClipboardItem) {
         val editorInstance by appContext.editorInstance()
-        editorInstance.commitClipboardItem(item).also { result ->
-            if (!result) {
-                appContext.showShortToastSync("Failed to paste item.")
+        if (item.type == ItemType.TEXT && item.uri != null) {
+            // Это большой текстовый фрагмент, читаем из файла
+            val fileContent = try {
+                appContext.contentResolver.openInputStream(item.uri)?.bufferedReader()?.use { it.readText() }
+            } catch (e: Exception) {
+                flogError { "Failed to read large text from file: ${e.message}" }
+                null
+            }
+            if (fileContent != null) {
+                editorInstance.commitText(fileContent)
+            } else {
+                // Если файл не прочитался, вставляем хотя бы предпросмотр
+                editorInstance.commitText(item.text.toString())
+                appContext.showShortToastSync("Failed to read full text, pasting preview.")
+            }
+        } else {
+            // Стандартная логика для изображений и обычного текста
+            editorInstance.commitClipboardItem(item).also { result ->
+                if (!result) {
+                    appContext.showShortToastSync("Failed to paste item.")
+                }
             }
         }
     }

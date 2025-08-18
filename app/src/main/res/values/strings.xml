@@ -1125,5 +1125,13 @@
         <item quantity="one">{v} candidate</item>
         <item quantity="other">{v} candidates</item>
     </plurals>
-
+    <!-- Clipboard settings -->
+    <string name="pref__clipboard__large_text_handling__label">Large text handling</string>
+    <string name="pref__clipboard__large_text_handling__summary">Bypasses system limitations by saving large text snippets to a file instead of the system clipboard.</string>
+    <string name="pref__clipboard__large_text_threshold__label">Large text threshold</string>
+    <plurals name="unit__kilobytes__symbol">
+        <item quantity="one">%d KB</item>
+        <item quantity="other">%d KB</item>
+    </plurals>
+    <string name="clipboard__item_description_large_text">Large text file</string>
 </resources>

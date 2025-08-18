@@ -129,6 +129,7 @@ import org.florisboard.lib.snygg.ui.SnyggIcon
 import org.florisboard.lib.snygg.ui.SnyggIconButton
 import org.florisboard.lib.snygg.ui.SnyggRow
 import org.florisboard.lib.snygg.ui.SnyggText
+import androidx.compose.material.icons.filled.Description
 
 private val ItemWidth = 200.dp
 private val DialogWidth = 240.dp
@@ -341,14 +342,27 @@ fun ClipboardInputLayout(
                         tint = Color.Black,
                     )
                 } else {
-                    SnyggText(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = bitmap.exceptionOrNull()?.message ?: "Unknown error",
-                    )
-                }
-            } else {
                 val text = item.stringRepresentation()
                 Column {
+                    // НАЧАЛО ИЗМЕНЕНИЙ
+                    if (item.uri != null) {
+                        // Это большой текстовый фрагмент, показываем специальный заголовок
+                        SnyggRow(
+                            elementName = FlorisImeUi.ClipboardItemDescription.elementName,
+                            attributes = attributes,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            SnyggIcon(imageVector = Icons.Default.Description)
+                            SnyggText(
+                                modifier = Modifier.weight(1f),
+                                // !! ВАЖНО: Добавьте эту строку в app/src/main/res/values/strings.xml
+                                // <string name="clipboard__item_description_large_text">Large text file</string>
+                                text = stringRes(R.string.clipboard__item_description_large_text)
+                            )
+                        }
+                    }
+                    // КОНЕЦ ИЗМЕНЕНИЙ
+
                     ClipTextItemDescription(
                         elementName = FlorisImeUi.ClipboardItemDescription.elementName,
                         attributes = attributes,

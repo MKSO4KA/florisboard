@@ -84,6 +84,15 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
             key = "clipboard__use_internal_clipboard",
             default = false,
         )
+        // Внутри класса Clipboard
+        val largeTextHandling = boolean(
+            key = "clipboard__large_text_handling",
+            default = true, // Включим по умолчанию
+        )
+        val largeTextThresholdKb = int(
+            key = "clipboard__large_text_threshold_kb",
+            default = 1024, // Порог в 1 МБ (1024 КБ)
+        )
         val syncToFloris = boolean(
             key = "clipboard__sync_to_floris",
             default = true,

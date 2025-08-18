@@ -925,4 +925,15 @@
         <item quantity="many">{v} предложений</item>
         <item quantity="other">{v} предложений</item>
     </plurals>
+        <!-- Clipboard settings -->
+    <string name="pref__clipboard__large_text_handling__label">Обработка больших фрагментов текста</string>
+    <string name="pref__clipboard__large_text_handling__summary">Обходит системные ограничения, сохраняя большие фрагменты текста в файл вместо системного буфера обмена.</string>
+    <string name="pref__clipboard__large_text_threshold__label">Порог для большого текста</string>
+    <plurals name="unit__kilobytes__symbol">
+        <item quantity="one">%d КБ</item>
+        <item quantity="few">%d КБ</item>
+        <item quantity="many">%d КБ</item>
+        <item quantity="other">%d КБ</item>
+    </plurals>
+    <string name="clipboard__item_description_large_text">Большой текстовый файл</string>
 </resources>

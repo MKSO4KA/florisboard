@@ -32,7 +32,29 @@ object ClipboardFileStorage {
 
     private val Context.clipboardFilesDir: FsFile
         get() = FsFile(this.noBackupFilesDir, "clipboard_files").also { it.mkdirs() }
-
+    // Внутри объекта ClipboardFileStorage
+    const val CLIPBOARD_TEXT_FILES_PATH = "clipboard_text_files"
+    
+    private val Context.clipboardTextFilesDir: FsFile
+        get() = FsFile(this.noBackupFilesDir, CLIPBOARD_TEXT_FILES_PATH).also { it.mkdirs() }
+    
+        // Внутри объекта ClipboardFileStorage
+    @Synchronized
+    fun writeTextToNewFile(context: Context, text: String): Uri {
+        val id = System.nanoTime()
+        val file = context.clipboardTextFilesDir.subFile(id.toString())
+        file.writeText(text)
+        return ClipboardMediaProvider.TEXT_CLIPS_URI.buildUpon().appendPath(id.toString()).build()
+    }
+    // Внутри объекта ClipboardFileStorage
+    fun getTextFileForId(context: Context, id: Long): FsFile {
+        return context.clipboardTextFilesDir.subFile(id.toString())
+    }
+    // Внутри объекта ClipboardFileStorage
+    fun deleteTextFileById(context: Context, id: Long) {
+        val file = context.clipboardTextFilesDir.subFile(id.toString())
+        file.delete()
+    }
     /**
      * Clones a content URI to internal storage.
      *

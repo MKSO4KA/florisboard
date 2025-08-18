@@ -225,8 +225,13 @@ data class ClipboardItem @OptIn(ExperimentalSerializationApi::class) constructor
      * Instructs the content provider to delete this URI. If not an image, is a noop
      */
     fun close(context: Context) {
-        if (type == ItemType.IMAGE) {
-            tryOrNull { context.contentResolver.delete(this.uri!!, null, null) }
+        tryOrNull {
+            if (uri != null) {
+                when (type) {
+                    ItemType.TEXT -> ClipboardFileStorage.deleteTextFileById(context, ContentUris.parseId(uri!!))
+                    ItemType.IMAGE, ItemType.VIDEO -> context.contentResolver.delete(this.uri!!, null, null)
+                }
+            }
         }
     }
 

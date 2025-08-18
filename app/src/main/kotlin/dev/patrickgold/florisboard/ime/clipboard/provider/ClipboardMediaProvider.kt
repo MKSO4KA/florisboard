@@ -51,17 +51,22 @@ class ClipboardMediaProvider : ContentProvider() {
         const val AUTHORITY = "${BuildConfig.APPLICATION_ID}.provider.clipboard"
         val IMAGE_CLIPS_URI: Uri = Uri.parse("content://$AUTHORITY/clips/images")
         val VIDEO_CLIPS_URI: Uri = Uri.parse("content://$AUTHORITY/clips/videos")
+        val TEXT_CLIPS_URI: Uri = Uri.parse("content://$AUTHORITY/clips/text")
 
         private const val IMAGE_CLIP_ITEM = 0
         private const val IMAGE_CLIPS_TABLE = 1
         private const val VIDEO_CLIP_ITEM = 2
         private const val VIDEO_CLIPS_TABLE = 3
+        private const val TEXT_CLIP_ITEM = 4
+        private const val TEXT_CLIPS_TABLE = 5
 
         private val Matcher = UriMatcher(UriMatcher.NO_MATCH).apply {
             addURI(AUTHORITY, "clips/images/#", IMAGE_CLIP_ITEM)
             addURI(AUTHORITY, "clips/images", IMAGE_CLIPS_TABLE)
             addURI(AUTHORITY, "clips/videos/#", VIDEO_CLIP_ITEM)
             addURI(AUTHORITY, "clips/videos", VIDEO_CLIPS_TABLE)
+            addURI(AUTHORITY, "clips/text/#", TEXT_CLIP_ITEM)
+            addURI(AUTHORITY, "clips/text", TEXT_CLIPS_TABLE)
         }
     }
 
@@ -106,11 +111,12 @@ class ClipboardMediaProvider : ContentProvider() {
 
     override fun getType(uri: Uri): String? {
         return when (Matcher.match(uri)) {
-            IMAGE_CLIP_ITEM, VIDEO_CLIP_ITEM -> {
+        IMAGE_CLIP_ITEM, VIDEO_CLIP_ITEM, TEXT_CLIP_ITEM -> {
                 cachedFileInfos.getOrDefault(ContentUris.parseId(uri), null)?.mimeTypes?.getOrNull(0)
             }
             IMAGE_CLIPS_TABLE -> "${ContentResolver.CURSOR_DIR_BASE_TYPE}/vnd.florisboard.image_clip_table"
             VIDEO_CLIPS_TABLE -> "${ContentResolver.CURSOR_DIR_BASE_TYPE}/vnd.florisboard.video_clip_table"
+            TEXT_CLIPS_TABLE -> "${ContentResolver.CURSOR_DIR_BASE_TYPE}/vnd.florisboard.text_clip_table"
             else -> null
         }
     }
@@ -126,8 +132,12 @@ class ClipboardMediaProvider : ContentProvider() {
 
     override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor {
         val id = ContentUris.parseId(uri)
-        val file = ClipboardFileStorage.getFileForId(context!!, id)
-
+        val file = when (Matcher.match(uri)) {
+            IMAGE_CLIP_ITEM, VIDEO_CLIP_ITEM -> ClipboardFileStorage.getFileForId(context!!, id)
+            TEXT_CLIP_ITEM -> ClipboardFileStorage.getTextFileForId(context!!, id)
+            else -> error("Unsupported URI for openFile: $uri")
+        }
+    
         // Nothing has permission to write anyway.
         return ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
     }
@@ -183,6 +193,11 @@ class ClipboardMediaProvider : ContentProvider() {
                 ioScope.launch {
                     clipboardFilesDao?.delete(id)
                 }
+                return 1
+            }
+            TEXT_CLIP_ITEM -> {
+                val id = ContentUris.parseId(uri)
+                ClipboardFileStorage.deleteTextFileById(context!!, id)
                 return 1
             }
             else -> error("Unable to identify type of $uri")
