@@ -62,7 +62,7 @@ fun ClipboardScreen() = FlorisScreen {
             DialogSliderPreference(
                 prefs.clipboard.suggestionTimeout,
                 title = stringRes(R.string.pref__clipboard__suggestion_timeout__label),
-                valueLabel = { stringRes(R.string.pref__clipboard__suggestion_timeout__summary, "v" to it) },
+                valueLabel = { pluralsRes(R.plurals.unit__kilobytes__symbol, it, "v" to it) },
                 min = 30,
                 max = 300,
                 stepIncrement = 5,

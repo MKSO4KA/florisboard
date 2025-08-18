@@ -23,6 +23,7 @@ import android.view.KeyEvent
 import androidx.core.view.inputmethod.InputConnectionCompat
 import androidx.core.view.inputmethod.InputContentInfoCompat
 import dev.patrickgold.florisboard.FlorisImeService
+import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.appContext
 import dev.patrickgold.florisboard.clipboardManager
@@ -434,10 +435,11 @@ class EditorInstance(context: Context) : AbstractEditorInstance(context) {
         autoSpace.setInactive()
         phantomSpace.setInactive()
         val text = activeContent.selectedText.ifBlank { currentInputConnection()?.getSelectedText(0) }
-        if (text != null) {
+        if (!text.isNullOrBlank()) {
             clipboardManager.addNewPlaintext(text.toString())
         } else {
-            appContext.showShortToastSync("Failed to retrieve selected text requested to copy: Eiter selection state is invalid or an error occurred within the input connection.")
+            appContext.showShortToastSync(R.string.error__snackbar_message_template, "error_message" to "No text selected")
+            return false
         }
         val activeSelection = activeContent.selection
         return setSelection(activeSelection.end, activeSelection.end)
