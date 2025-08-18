@@ -1,5 +1,3 @@
-// Вставьте этот код в app/src/main/kotlin/dev/patrickgold/florisboard/ime/clipboard/ClipboardInputLayout.kt
-
 /*
  * Copyright (C) 2021-2025 The FlorisBoard Contributors
  *
@@ -695,34 +693,6 @@ fun ClipboardInputLayout(
                 HistoryDisabledView()
             }
         }
-    }
-}
-
-private fun LazyStaggeredGridScope.clipboardItems(
-    items: List<ClipboardItem>,
-    key: String,
-    @StringRes title: Int,
-) {
-    if (items.isNotEmpty()) {
-        item(key, span = StaggeredGridItemSpan.FullLine) {
-            ClipCategoryTitle(text = stringRes(title))
-        }
-        items(items) { item ->
-            //ClipItemView(
-            //    elementName = FlorisImeUi.ClipboardItem.elementName,
-            //    item = item,
-            //    contentScrollInsteadOfClip = false,
-            //)
-        }
-    }
-}
-
-private fun LazyStaggeredGridScope.header(
-    key: String,
-    content: @Composable () -> Unit,
-) {
-    item(key, span = StaggeredGridItemSpan.FullLine) {
-        content()
     }
 }
 

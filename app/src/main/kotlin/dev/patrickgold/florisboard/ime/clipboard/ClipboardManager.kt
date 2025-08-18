@@ -18,6 +18,9 @@
 
 package dev.patrickgold.florisboard.ime.clipboard
 
+import android.content.ContentUris
+import dev.patrickgold.florisboard.ime.clipboard.provider.ClipboardMediaProvider
+import dev.patrickgold.florisboard.lib.devtools.flogError
 import android.content.ClipData
 import android.content.Context
 import androidx.lifecycle.LiveData
@@ -374,9 +377,13 @@ class ClipboardManager(
 
     fun pasteItem(item: ClipboardItem) {
         val editorInstance by appContext.editorInstance()
-        if (item.type == ItemType.TEXT && item.uri != null) {
+        // НАЧАЛО ИЗМЕНЕНИЙ
+        if (item.type == ItemType.TEXT && item.uri != null && item.uri.authority == ClipboardMediaProvider.AUTHORITY) {
+            // Это наш большой текстовый фрагмент, читаем его напрямую из файла
             val fileContent = try {
-                appContext.contentResolver.openInputStream(item.uri)?.bufferedReader()?.use { it.readText() }
+                val id = ContentUris.parseId(item.uri)
+                val file = ClipboardFileStorage.getTextFileForId(appContext, id)
+                file.readText()
             } catch (e: Exception) {
                 flogError { "Failed to read large text from file: ${e.message}" }
                 null
@@ -384,16 +391,19 @@ class ClipboardManager(
             if (fileContent != null) {
                 editorInstance.commitText(fileContent)
             } else {
+                // Если файл не прочитался, вставляем хотя бы предпросмотр
                 editorInstance.commitText(item.text.toString())
                 appContext.showShortToastSync("Failed to read full text, pasting preview.")
             }
         } else {
+            // Стандартная логика для изображений и обычного текста
             editorInstance.commitClipboardItem(item).also { result ->
                 if (!result) {
                     appContext.showShortToastSync("Failed to paste item.")
                 }
             }
         }
+        // КОНЕЦ ИЗМЕНЕНИЙ
     }
 
     /**
